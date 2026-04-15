@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yeldra — AI-powered client workflows</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand-black: #1b0f45;
+      --brand-purple: #7c55ff;
+      --brand-purple-200: #d0c2ff;
+      --brand-purple-100: #ece8ff;
+      --brand-purple-300: #b8a3ff;
+      --brand-green: #3dfd98;
+      --brand-green-200: #b3fed7;
+      --brand-green-300: #8dfdc3;
+      --brand-white: #ffffff;
+      --neutral-lighter: #b0adc0;
+      --neutral-dark: #3d3760;
+    }
+
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--brand-black);
+      color: var(--brand-white);
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      letter-spacing: 0.3px;
+      margin: 0;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    .highlight-purple { color: var(--brand-purple-300); }
+    .highlight-green { color: var(--brand-green); }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(27,15,69,0.75);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.04em;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--brand-purple); }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.78);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover { color: white; }
+    .btn-nav {
+      background: #22c55e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 2px 12px rgba(34,197,94,0.3);
+    }
+    .btn-nav:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(34,197,94,0.4); }
+    .btn-nav:active { transform: translateY(0); }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #22c55e;
+      color: white;
+      border-radius: 10px;
+      padding: 0.8rem 1.75rem;
+      font-size: 0.975rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 2px 12px rgba(34,197,94,0.3), 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 28px rgba(34,197,94,0.5); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      border-radius: 10px;
+      padding: 0.8rem 1.75rem;
+      font-size: 0.975rem;
+      font-weight: 400;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-ghost:hover { color: white; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.05); }
+    .btn-ghost:active { transform: scale(0.98); }
+
+    /* Hero */
+    .hero-section {
+      position: relative;
+      z-index: 10;
+      padding-top: 128px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 100px;
+      padding: 0.4rem 1.1rem 0.4rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.88);
+      margin-bottom: 2rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+      letter-spacing: 0.01em;
+    }
+    .hero-badge-tag {
+      display: inline-flex;
+      align-items: center;
+      background: var(--brand-green);
+      color: #0a1f10;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 0.18rem 0.6rem;
+      border-radius: 100px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--brand-green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .hero-title { max-width: 820px; margin: 0 auto 1.5rem; }
+    .heading-h1 {
+      font-size: 4rem;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      text-align: center;
+      margin: 0;
+    }
+    .heading-h2 {
+      font-size: 2.5rem;
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .hero-sub {
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      color: rgba(255,255,255,0.65);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    .hero-ctas { display: flex; gap: 0.875rem; justify-content: center; margin-bottom: 4rem; }
+
+    /* Dashboard mock */
+    .hero-visual {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    .hero-glow {
+      position: absolute;
+      bottom: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 320px;
+      background: radial-gradient(ellipse at 50% 100%, rgba(110,69,255,0.28) 0%, rgba(61,253,152,0.06) 45%, transparent 72%);
+      pointer-events: none;
+    }
+    .hero-img-wrap {
+      position: relative;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-bottom: none;
+      box-shadow: 0 -4px 80px rgba(110,69,255,0.18), 0 4px 40px rgba(0,0,0,0.6);
+    }
+    .hero-img-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 55%, rgba(27,15,69,0.97) 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .dashboard-mock {
+      width: 100%;
+      background: #231358;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+    }
+    .dash-topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: #1c0f4e;
+    }
+    .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dash-body { display: flex; flex: 1; }
+    .dash-side {
+      width: 190px;
+      min-width: 160px;
+      background: #1a0d48;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      padding: 1rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .dash-logo { font-size: 1rem; font-weight: 700; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; letter-spacing: -0.03em; }
+    .dash-item {
+      padding: 0.5rem 0.75rem;
+      border-radius: 7px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .dash-item.active { background: rgba(110,69,255,0.18); color: var(--brand-purple-200); }
+    .dash-icon { width: 13px; height: 13px; border-radius: 3px; background: currentColor; opacity: 0.6; flex-shrink: 0; }
+    .dash-main { flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .dash-heading { font-size: 0.975rem; font-weight: 600; }
+    .dash-sub { font-size: 0.7rem; color: rgba(255,255,255,0.3); margin-top: 2px; }
+    .dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .dash-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 10px;
+      padding: 0.875rem;
+    }
+    .dash-card-label { font-size: 0.67rem; color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+    .dash-card-val { font-size: 1.4rem; font-weight: 600; }
+    .dash-card-delta { font-size: 0.62rem; margin-top: 3px; }
+    .green-val { color: var(--brand-green); }
+    .purple-val { color: var(--brand-purple-200); }
+    .green-delta { color: rgba(61,253,152,0.65); }
+    .purple-delta { color: rgba(169,144,255,0.65); }
+    .dash-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; }
+    .dash-chart {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 0.875rem;
+    }
+    .dash-chart-title { font-size: 0.67rem; color: rgba(255,255,255,0.3); margin-bottom: 0.6rem; }
+    .dash-bars { display: flex; align-items: flex-end; gap: 5px; height: 68px; }
+    .bar { flex: 1; border-radius: 3px 3px 0 0; }
+    .bar-dim { background: rgba(110,69,255,0.22); }
+    .bar-purple { background: var(--brand-purple); }
+    .bar-green { background: rgba(61,253,152,0.45); }
+    .dash-list {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .dash-list-title { font-size: 0.67rem; color: rgba(255,255,255,0.3); margin-bottom: 4px; font-weight: 600; }
+    .list-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.3rem 0.4rem;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.03);
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
+    }
+    .list-avatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+    .list-tag {
+      margin-left: auto;
+      padding: 1px 7px;
+      border-radius: 100px;
+      font-size: 0.62rem;
+      font-weight: 500;
+    }
+    .tag-g { background: rgba(61,253,152,0.15); color: var(--brand-green-300); }
+    .tag-p { background: rgba(110,69,255,0.2); color: var(--brand-purple-200); }
+
+    /* Sections */
+    .section {
+      position: relative; z-index: 10;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5.5rem 2rem;
+    }
+    .section-full { position: relative; z-index: 10; padding: 4rem 0; }
+    .section-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brand-purple-300);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 18px; height: 2px;
+      background: var(--brand-purple);
+      border-radius: 2px;
+    }
+    .section-center { text-align: center; margin-bottom: 3.5rem; }
+    .section-center .section-label { justify-content: center; }
+    .section-subtitle {
+      color: rgba(255,255,255,0.6);
+      max-width: 460px;
+      margin: 0.875rem auto 0;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* Logos */
+    .logos-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      opacity: 0.45;
+      filter: grayscale(1);
+    }
+    .logo-item { font-size: 1rem; font-weight: 700; letter-spacing: -0.03em; color: white; }
+
+    /* Feature grid */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .feature-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+    .feature-card:hover {
+      border-color: rgba(110,69,255,0.25);
+      background: rgba(110,69,255,0.05);
+      transform: translateY(-3px);
+    }
+    .feature-card:focus-within { outline: 2px solid rgba(110,69,255,0.5); }
+    .feature-icon {
+      width: 42px; height: 42px;
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.1rem; font-size: 1.2rem;
+    }
+    .icon-p { background: rgba(110,69,255,0.16); }
+    .icon-g { background: rgba(61,253,152,0.13); }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .feature-card p { font-size: 0.85rem; color: rgba(255,255,255,0.48); line-height: 1.65; margin: 0; }
+
+    /* Big feature block */
+    .big-feature {
+      background: rgba(124,85,255,0.13);
+      border: 1px solid rgba(124,85,255,0.22);
+      border-radius: 22px;
+      padding: 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .feature-list { list-style: none; margin: 1.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.875rem; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.875rem; color: rgba(255,255,255,0.65); line-height: 1.55;
+    }
+    .check {
+      width: 19px; height: 19px; border-radius: 50%;
+      background: rgba(61,253,152,0.12);
+      border: 1px solid rgba(61,253,152,0.28);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+      font-size: 0.62rem; color: var(--brand-green);
+    }
+    .mini-mock {
+      background: #261660;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 1.25rem;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+    }
+    .flow-node {
+      border-radius: 9px;
+      padding: 0.7rem 0.9rem;
+      margin-bottom: 0;
+    }
+    .flow-trigger { background: rgba(110,69,255,0.18); border: 1px solid rgba(110,69,255,0.32); }
+    .flow-action { background: rgba(61,253,152,0.09); border: 1px solid rgba(61,253,152,0.2); }
+    .flow-cond { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); }
+    .flow-label { font-size: 0.67rem; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 3px; }
+    .flow-label.t { color: var(--brand-purple-200); }
+    .flow-label.a { color: var(--brand-green-300); }
+    .flow-label.c { color: rgba(255,255,255,0.3); }
+    .flow-text { font-size: 0.8rem; color: rgba(255,255,255,0.75); }
+    .flow-arrow { text-align: center; color: rgba(255,255,255,0.18); font-size: 1rem; padding: 2px 0; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; text-align: center; }
+    .stat-item { padding: 2rem 1rem; }
+    .stat-num { font-size: 2.8rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.5rem; }
+    .stat-num span { color: var(--brand-purple-300); }
+    .stat-label { font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.5; }
+
+    /* Testimonials */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .testimonial-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .stars { display: flex; gap: 2px; margin-bottom: 0.875rem; color: var(--brand-green); font-size: 0.85rem; }
+    .t-text { font-size: 0.875rem; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 1.25rem; }
+    .t-author { display: flex; align-items: center; gap: 0.7rem; }
+    .t-avatar { width: 34px; height: 34px; border-radius: 50%; }
+    .t-name { font-size: 0.85rem; font-weight: 600; }
+    .t-role { font-size: 0.75rem; color: rgba(255,255,255,0.55); }
+
+    /* Pricing */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: start; }
+    .pricing-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex; flex-direction: column;
+    }
+    .pricing-card.featured {
+      background: rgba(124,85,255,0.18);
+      border-color: rgba(124,85,255,0.45);
+      position: relative;
+    }
+    .pricing-badge {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--brand-purple);
+      color: white;
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.22rem 0.875rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .p-tier { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.55); margin-bottom: 0.75rem; }
+    .p-price { font-size: 2.6rem; font-weight: 300; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.2rem; }
+    .p-price sup { font-size: 1.1rem; vertical-align: super; }
+    .p-period { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-bottom: 1.25rem; }
+    .p-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 0 0 1.25rem; }
+    .p-features { list-style: none; padding: 0; margin: 0 0 1.75rem; display: flex; flex-direction: column; gap: 0.7rem; flex: 1; }
+    .p-features li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: rgba(255,255,255,0.78); }
+    .p-features .check { width: 16px; height: 16px; font-size: 0.58rem; }
+
+    /* CTA */
+    .cta-section { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto 5rem; padding: 0 2rem; }
+    .cta-card {
+      background: linear-gradient(135deg, rgba(124,85,255,0.35) 0%, rgba(61,253,152,0.12) 100%);
+      border: 1px solid rgba(124,85,255,0.4);
+      border-radius: 22px;
+      padding: 4.5rem 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 500px; height: 300px;
+      background: radial-gradient(ellipse, rgba(110,69,255,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Footer */
+    footer {
+      position: relative; z-index: 10;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding: 3rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2.5rem;
+      gap: 3rem;
+    }
+    .footer-brand { max-width: 260px; }
+    .footer-tagline { font-size: 0.83rem; color: rgba(255,255,255,0.55); line-height: 1.6; margin-top: 0.75rem; }
+    .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+    .footer-col-title {
+      font-size: 0.73rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.3); margin-bottom: 0.875rem;
+    }
+    .footer-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+    .footer-links a { color: rgba(255,255,255,0.48); text-decoration: none; font-size: 0.85rem; transition: color 0.14s; }
+    .footer-links a:hover { color: white; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.48); }
+    .footer-social { display: flex; gap: 1.25rem; }
+    .footer-social a { color: rgba(255,255,255,0.48); text-decoration: none; font-size: 0.78rem; transition: color 0.14s; }
+    .footer-social a:hover { color: rgba(255,255,255,0.7); }
+
+    .section-divider { max-width: 1200px; margin: 0 auto; border: none; border-top: 1px solid rgba(255,255,255,0.12); }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+      .heading-h1 { font-size: 3.25rem; }
+      .heading-h2 { font-size: 2rem; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .big-feature { grid-template-columns: 1fr; gap: 2rem; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .footer-cols { grid-template-columns: repeat(2, 1fr); }
+      .footer-top { flex-direction: column; }
+      .nav-links { display: none; }
+      .dash-side { display: none; }
+      .dash-bottom { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .heading-h1 { font-size: 2.5rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .dash-cards { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">yel<span>dra</span></a>
+      <ul class="nav-links">
+        <li><a href="#">Product</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Docs</a></li>
+      </ul>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="#" style="color:rgba(255,255,255,0.52);text-decoration:none;font-size:0.875rem;transition:color 0.14s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.52)'">Sign in</a>
+        <a href="#" class="btn-nav">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-badge">
+      <span class="hero-badge-tag">NEW</span>
+      Now in public beta — join 2,400+ teams
+    </div>
+
+    <div class="hero-title">
+      <h1 class="heading-h1">
+        Turn every client into a<br />
+        <span class="highlight-purple">seamless experience</span> that<br />
+        <span class="highlight-green">converts &amp; retains</span>
+      </h1>
+    </div>
+
+    <p class="hero-sub">
+      Yeldra unifies your client workflows, automations, and communication into one intelligent platform — so your team can focus on what matters.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#" class="btn-primary">
+        Start for free
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#" class="btn-ghost">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M6 5l4 2.5L6 10V5z" fill="currentColor"/></svg>
+        Watch demo
+      </a>
+    </div>
+
+    <!-- Dashboard visual -->
+    <div class="hero-visual">
+      <div class="hero-glow"></div>
+      <div class="hero-img-wrap">
+        <div class="dashboard-mock">
+          <!-- Topbar -->
+          <div class="dash-topbar">
+            <div class="dash-dot" style="background:#ff5f57;"></div>
+            <div class="dash-dot" style="background:#febc2e;"></div>
+            <div class="dash-dot" style="background:#28c840;"></div>
+            <div style="flex:1;display:flex;justify-content:center;">
+              <div style="background:rgba(255,255,255,0.05);border-radius:5px;padding:3px 14px;font-size:0.7rem;color:rgba(255,255,255,0.28);">app.yeldra.com/dashboard</div>
+            </div>
+          </div>
+          <!-- Body -->
+          <div class="dash-body">
+            <!-- Sidebar -->
+            <div class="dash-side">
+              <div class="dash-logo">yel<span style="color:var(--brand-purple);">dra</span></div>
+              <div class="dash-item active"><div class="dash-icon" style="border-radius:50%;"></div>Dashboard</div>
+              <div class="dash-item"><div class="dash-icon"></div>Clients</div>
+              <div class="dash-item"><div class="dash-icon"></div>Projects</div>
+              <div class="dash-item"><div class="dash-icon" style="border-radius:50%;"></div>Workflows</div>
+              <div class="dash-item"><div class="dash-icon"></div>Analytics</div>
+              <div class="dash-item"><div class="dash-icon"></div>Billing</div>
+              <div style="margin-top:auto;"><div class="dash-item"><div class="dash-icon" style="border-radius:50%;"></div>Settings</div></div>
+            </div>
+            <!-- Main -->
+            <div class="dash-main">
+              <div>
+                <div class="dash-heading">Good morning, Sarah ✦</div>
+                <div class="dash-sub">Here's what's happening with your clients today</div>
+              </div>
+              <div class="dash-cards">
+                <div class="dash-card">
+                  <div class="dash-card-label">Active clients</div>
+                  <div class="dash-card-val green-val">48</div>
+                  <div class="dash-card-delta green-delta">+3 this week</div>
+                </div>
+                <div class="dash-card">
+                  <div class="dash-card-label">Revenue (MRR)</div>
+                  <div class="dash-card-val purple-val">$24.6k</div>
+                  <div class="dash-card-delta purple-delta">↑ 12% vs last month</div>
+                </div>
+                <div class="dash-card">
+                  <div class="dash-card-label">Tasks due today</div>
+                  <div class="dash-card-val" style="color:rgba(255,255,255,0.9);">7</div>
+                  <div class="dash-card-delta" style="color:rgba(255,255,255,0.28);">3 high priority</div>
+                </div>
+              </div>
+              <div class="dash-bottom">
+                <div class="dash-chart">
+                  <div class="dash-chart-title">Revenue overview — last 8 months</div>
+                  <div class="dash-bars">
+                    <div class="bar bar-dim" style="height:38%;"></div>
+                    <div class="bar bar-dim" style="height:52%;"></div>
+                    <div class="bar bar-dim" style="height:44%;"></div>
+                    <div class="bar bar-purple" style="height:68%;"></div>
+                    <div class="bar bar-dim" style="height:58%;"></div>
+                    <div class="bar bar-green" style="height:76%;"></div>
+                    <div class="bar bar-purple" style="height:88%;"></div>
+                    <div class="bar bar-dim" style="height:72%;"></div>
+                  </div>
+                </div>
+                <div class="dash-list">
+                  <div class="dash-list-title">Recent activity</div>
+                  <div class="list-row">
+                    <img class="list-avatar" src="https://placehold.co/20x20/6e45ff/ffffff?text=A" alt="" />
+                    Acme Corp
+                    <span class="list-tag tag-g">Paid</span>
+                  </div>
+                  <div class="list-row">
+                    <img class="list-avatar" src="https://placehold.co/20x20/3dfd98/07001f?text=B" alt="" />
+                    BrightPath
+                    <span class="list-tag tag-p">Review</span>
+                  </div>
+                  <div class="list-row">
+                    <img class="list-avatar" src="https://placehold.co/20x20/a990ff/07001f?text=N" alt="" />
+                    NovaStar
+                    <span class="list-tag tag-g">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logos -->
+  <div class="section-full">
+    <div class="section-inner">
+      <p style="text-align:center;font-size:0.73rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:2rem;">Trusted by teams at</p>
+      <div class="logos-strip">
+        <span class="logo-item">Vercel</span>
+        <span class="logo-item">Linear</span>
+        <span class="logo-item">Notion</span>
+        <span class="logo-item">Stripe</span>
+        <span class="logo-item">Loom</span>
+        <span class="logo-item">Figma</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="section-center">
+      <div class="section-label">Platform</div>
+      <h2 class="heading-h2">Everything your client team needs</h2>
+      <p class="section-subtitle">One platform to manage clients, automate workflows, and grow revenue — without the complexity.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon icon-p">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" fill="#a990ff"/><rect x="11" y="2" width="7" height="7" rx="2" fill="#6e45ff" opacity="0.45"/><rect x="2" y="11" width="7" height="7" rx="2" fill="#6e45ff" opacity="0.45"/><rect x="11" y="11" width="7" height="7" rx="2" fill="#a990ff"/></svg>
+        </div>
+        <h3>Client hub</h3>
+        <p>A centralized workspace for every client — notes, files, tasks, and conversations in one place. No more lost context.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-g">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M3 6h9M3 14h11" stroke="#3dfd98" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Smart automations</h3>
+        <p>Trigger actions based on client behavior, contract milestones, or custom rules. Save hours each week on repetitive tasks.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-p">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#a990ff" stroke-width="1.7"/><path d="M10 6v4l3 2" stroke="#a990ff" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Timeline tracking</h3>
+        <p>Visualize project milestones, deliverables, and deadlines across all clients with a clean, interactive timeline view.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-g">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 15l4-4 3 3 5-7" stroke="#3dfd98" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Revenue analytics</h3>
+        <p>Track MRR, churn, and expansion revenue at a glance. Understand which clients drive the most value.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-p">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v4M10 13v4M3 10h4M13 10h4" stroke="#a990ff" stroke-width="1.7" stroke-linecap="round"/><circle cx="10" cy="10" r="2.5" fill="#6e45ff"/></svg>
+        </div>
+        <h3>Integrations</h3>
+        <p>Connect Slack, HubSpot, Notion, Stripe, and 80+ tools. Yeldra lives where your team already works.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon icon-g">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="3" stroke="#3dfd98" stroke-width="1.7"/><path d="M7 10h6M10 7v6" stroke="#3dfd98" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Client portal</h3>
+        <p>Give clients a branded self-serve portal to approve deliverables, track progress, and raise requests — on their schedule.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- BIG FEATURE -->
+  <div class="section">
+    <div class="big-feature">
+      <div>
+        <div class="section-label">Automation</div>
+        <h2 class="heading-h2">Automate the work holding your team back</h2>
+        <ul class="feature-list">
+          <li><div class="check">✓</div><span>Build no-code automations with a drag-and-drop builder — no engineering needed.</span></li>
+          <li><div class="check">✓</div><span>Trigger emails, tasks, and status updates based on client actions automatically.</span></li>
+          <li><div class="check">✓</div><span>Sync data across your CRM, billing, and project tools in real time.</span></li>
+          <li><div class="check">✓</div><span>Built-in templates for onboarding, renewals, and quarterly reviews.</span></li>
+        </ul>
+        <div style="margin-top:2rem;">
+          <a href="#" class="btn-primary">Explore automations</a>
+        </div>
+      </div>
+      <div class="mini-mock">
+        <div style="font-size:0.67rem;color:rgba(255,255,255,0.3);margin-bottom:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;">Workflow builder</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="flow-node flow-trigger">
+            <div class="flow-label t">Trigger</div>
+            <div class="flow-text">Client signs contract</div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-action">
+            <div class="flow-label a">Action</div>
+            <div class="flow-text">Send welcome email sequence</div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-action">
+            <div class="flow-label a">Action</div>
+            <div class="flow-text">Create onboarding project</div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node flow-cond">
+            <div class="flow-label c">Condition</div>
+            <div class="flow-text" style="color:rgba(255,255,255,0.5);">Wait 48h → check completion</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- STATS -->
+  <div class="section">
+    <div class="section-center">
+      <h2 class="heading-h2">Numbers that speak for themselves</h2>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-num"><span>2.4</span>k+</div>
+        <div class="stat-label">Teams using Yeldra worldwide</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span>98</span>%</div>
+        <div class="stat-label">Customer satisfaction score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span>12</span>h</div>
+        <div class="stat-label">Saved per team per week on average</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span>3.2</span>x</div>
+        <div class="stat-label">Faster client onboarding vs. manual</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- PRICING -->
+  <div class="section">
+    <div class="section-center">
+      <div class="section-label">Pricing</div>
+      <h2 class="heading-h2">Simple, transparent pricing</h2>
+      <p class="section-subtitle">Start free. Upgrade as you grow. No surprise fees.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="p-tier">Starter</div>
+        <div class="p-price"><sup>$</sup>0</div>
+        <div class="p-period">Free forever</div>
+        <hr class="p-divider" />
+        <ul class="p-features">
+          <li><div class="check">✓</div>Up to 5 clients</li>
+          <li><div class="check">✓</div>Basic workflows</li>
+          <li><div class="check">✓</div>Client portal</li>
+          <li><div class="check">✓</div>2 team members</li>
+          <li><div class="check">✓</div>Email support</li>
+        </ul>
+        <a href="#" class="btn-ghost" style="justify-content:center;">Get started free</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most popular</div>
+        <div class="p-tier">Growth</div>
+        <div class="p-price"><sup>$</sup>49</div>
+        <div class="p-period">per seat / month</div>
+        <hr class="p-divider" />
+        <ul class="p-features">
+          <li><div class="check">✓</div>Unlimited clients</li>
+          <li><div class="check">✓</div>Advanced automations</li>
+          <li><div class="check">✓</div>Revenue analytics</li>
+          <li><div class="check">✓</div>Custom branding</li>
+          <li><div class="check">✓</div>80+ integrations</li>
+          <li><div class="check">✓</div>Priority support</li>
+        </ul>
+        <a href="#" class="btn-primary" style="justify-content:center;">Start 14-day trial</a>
+      </div>
+      <div class="pricing-card">
+        <div class="p-tier">Enterprise</div>
+        <div class="p-price" style="font-size:2rem;padding-top:0.4rem;">Custom</div>
+        <div class="p-period">contact us</div>
+        <hr class="p-divider" />
+        <ul class="p-features">
+          <li><div class="check">✓</div>Everything in Growth</li>
+          <li><div class="check">✓</div>SSO &amp; advanced security</li>
+          <li><div class="check">✓</div>Dedicated CSM</li>
+          <li><div class="check">✓</div>SLA guarantee</li>
+          <li><div class="check">✓</div>Custom contracts</li>
+          <li><div class="check">✓</div>Onboarding support</li>
+        </ul>
+        <a href="#" class="btn-ghost" style="justify-content:center;">Talk to sales</a>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" />
+
+  <!-- TESTIMONIALS -->
+  <div class="section">
+    <div class="section-center">
+      <div class="section-label">Reviews</div>
+      <h2 class="heading-h2">Loved by client-facing teams</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="t-text">"Yeldra completely changed how we manage our 60+ clients. The automation builder alone saves our team 15 hours a week. I can't imagine going back."</p>
+        <div class="t-author">
+          <img class="t-avatar" src="https://placehold.co/34x34/6e45ff/ffffff?text=JM" alt="" />
+          <div><div class="t-name">Jordan M.</div><div class="t-role">Head of Customer Success, Acme Corp</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="t-text">"The client portal feature is a game-changer. Our clients love the transparency, and our NPS went from 42 to 71 in three months after switching."</p>
+        <div class="t-author">
+          <img class="t-avatar" src="https://placehold.co/34x34/3dfd98/07001f?text=SL" alt="" />
+          <div><div class="t-name">Sofia L.</div><div class="t-role">Operations Lead, BrightPath Agency</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="t-text">"We evaluated six tools before choosing Yeldra. Best decision we made this year. Onboarding was fast and the support team is genuinely helpful."</p>
+        <div class="t-author">
+          <img class="t-avatar" src="https://placehold.co/34x34/a990ff/07001f?text=RK" alt="" />
+          <div><div class="t-name">Ravi K.</div><div class="t-role">Co-founder, NovaStar Solutions</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <div class="cta-card">
+      <div class="section-label" style="justify-content:center;">Get started</div>
+      <h2 class="heading-h2" style="margin:0.75rem 0 1.25rem;">Ready to transform your<br /><span class="highlight-green">client experience?</span></h2>
+      <p style="color:rgba(255,255,255,0.45);max-width:400px;margin:0 auto 2.5rem;font-size:0.95rem;line-height:1.7;">Join thousands of teams using Yeldra to deliver exceptional client outcomes every day.</p>
+      <div style="display:flex;gap:0.875rem;justify-content:center;flex-wrap:wrap;">
+        <a href="#" class="btn-primary" style="font-size:1rem;padding:0.875rem 2rem;">Start for free — no credit card</a>
+        <a href="#" class="btn-ghost" style="font-size:1rem;padding:0.875rem 2rem;">Book a demo</a>
+      </div>
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:1.5rem;">Free 14-day trial on Growth plan · Cancel anytime</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">yel<span>dra</span></a>
+        <p class="footer-tagline">The client management platform built for modern teams. Automate, collaborate, and grow.</p>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <div class="footer-col-title">Product</div>
+          <ul class="footer-links">
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Automations</a></li>
+            <li><a href="#">Integrations</a></li>
+            <li><a href="#">Changelog</a></li>
+            <li><a href="#">Roadmap</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-col-title">Company</div>
+          <ul class="footer-links">
+            <li><a href="#">About</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Press</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-col-title">Resources</div>
+          <ul class="footer-links">
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">API reference</a></li>
+            <li><a href="#">Community</a></li>
+            <li><a href="#">Status</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <ul class="footer-links">
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Security</a></li>
+            <li><a href="#">Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 Yeldra, Inc. All rights reserved.</span>
+      <div class="footer-social">
+        <a href="#">Twitter</a>
+        <a href="#">LinkedIn</a>
+        <a href="#">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
